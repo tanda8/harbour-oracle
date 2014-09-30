@@ -48,7 +48,12 @@ BEGIN
     COUNTRY PODCOUNTRY,    
     COUNTRY PORCOUNTRY,
     AIRPORTS PODAIR,
-    AIRPORTS PORAIR    
+    AIRPORTS PORAIR,
+    
+    RQBK_OC_CARRIER,
+    RQBK_REF,
+    RQBK_AIR_CARRIER    
+    
 	WHERE RQBK_IDX.RQI_COMPLETE = -1   -- Completed Transaction
     AND RQBK_IDX.RQI_ACTIVE = -1     -- Active Transaction
     AND RQBK_IDX.RQI_RQBK = 2        -- Booking Type (RateQuote=1, Booking=2)
@@ -71,23 +76,20 @@ BEGIN
     AND RQBK_SH_CS.RQSC_CS_ID = CONSIGNEE.CO_ID (+)
     AND DECODE(v_COMPANY_TYPE, 1, RQBK_SH_CS.RQSC_SH_ID, 2, RQBK_SH_CS.RQSC_CS_ID) = v_COMPANY_ID   -- Decode: Shipper = 1, Consignee = 2
     
-    AND 
-    (
-      (i_SEARCH_TYPE = 'CI') OR   -- Company ID (return everything)
-      (i_SEARCH_TYPE = 'HN' AND RQI_RQBK_NUM = i_SEARCH_TERM) OR   -- Harbour Number
-      (i_SEARCH_TYPE = 'CN' AND DECODE(v_COMPANY_TYPE, 2, RQBK_SH_CS.RQSC_SH_ID, 1, RQBK_SH_CS.RQSC_CS_ID) = i_SEARCH_TERM) OR   -- Company Name
-      (i_SEARCH_TYPE = 'POD' AND (RQBK_SH_CS.RQSC_POD_AIR = i_SEARCH_TERM OR RQBK_SH_CS.RQSC_POD = i_SEARCH_TERM))   -- Place of Delivery (ocean and air)
-      
-      
-      
+    AND RQBK_IDX.RQI_RQBK_ID = RQBK_OC_CARRIER.RQOC_RQBK_ID (+)
+    AND RQBK_IDX.RQI_RQBK_ID = RQBK_REF.RQR_RQBK_ID (+)
+    AND RQBK_IDX.RQI_RQBK_ID = RQBK_AIR_CARRIER.RQAC_RQBK_ID (+)
+    
+    AND (
+         (i_SEARCH_TYPE = 'CI')   -- Company ID (return everything)
+      OR (i_SEARCH_TYPE = 'HN' AND RQI_RQBK_NUM = i_SEARCH_TERM)   -- Harbour Number
+      OR (i_SEARCH_TYPE = 'CN' AND DECODE(v_COMPANY_TYPE, 2, RQBK_SH_CS.RQSC_SH_ID, 1, RQBK_SH_CS.RQSC_CS_ID) = i_SEARCH_TERM)   -- Company Name
+      OR (i_SEARCH_TYPE = 'POD' AND (RQBK_SH_CS.RQSC_POD_AIR = i_SEARCH_TERM OR RQBK_SH_CS.RQSC_POD = i_SEARCH_TERM))   -- Place of Delivery (ocean and air)      
+      OR (i_SEARCH_TYPE = 'CBN' AND RQBK_OC_CARRIER.RQOC_BK_NUM = i_SEARCH_TERM)   -- Carrier Booking Number      
+      OR (i_SEARCH_TYPE = 'SRN' AND RQBK_REF.RQR_REF_TYPE = 1 AND RQBK_REF.RQR_REF_NUM = i_SEARCH_TERM)   -- Shipper Reference Number
+      OR (i_SEARCH_TYPE = 'CRN' AND RQBK_REF.RQR_REF_TYPE = 2 AND RQBK_REF.RQR_REF_NUM = i_SEARCH_TERM)   -- Consignee Reference Number
+      OR (i_SEARCH_TYPE = 'AWN' AND RQBK_AIR_CARRIER.RQAC_AWB_NUM = i_SEARCH_TERM)   -- Air Waybill Number      
     )
-    
-    
-    
---    CASE i_SEARCH_TYPE
---      WHEN 'HN' THEN 'The owner is SYS'
---      WHEN 'CBN' THEN 'The owner is SYSTEM'
---    END
         
   ORDER BY REQUEST_DATE DESC;
 
