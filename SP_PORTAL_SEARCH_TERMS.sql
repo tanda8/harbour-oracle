@@ -11,9 +11,9 @@ AS
 
 BEGIN
 
-	IF (i_COMPANY_TYPE != 1 AND i_COMPANY_TYPE != 2) THEN  -- not a Shipper or Consignee company
-		RETURN;
-	END IF;
+  IF (i_COMPANY_TYPE != 1 AND i_COMPANY_TYPE != 2) THEN  -- not a Shipper or Consignee company
+    RETURN;
+  END IF;
 
   IF (i_SEARCH_TYPE = 'HN') THEN  -- HarbourNumber
     OPEN o_CURSOR FOR
@@ -128,24 +128,43 @@ BEGIN
     ORDER BY RQBK_OC_CARRIER.RQOC_NVO_NUM ASC;
   END IF;
 
-  IF (i_SEARCH_TYPE = 'POD') THEN  -- PlaceOfDeleivery [Ocean]
+  IF (i_SEARCH_TYPE = 'POD-O') THEN  -- PlaceOfDeleivery [Ocean]
     OPEN o_CURSOR FOR 
     SELECT DISTINCT
       CITY.CT_DESC SEARCH_TERM_KEY,           -- Key: Place of Deleivery
       TO_CHAR(CITY.CT_ID) SEARCH_TERM_VALUE   -- Value: CITY ID
     FROM
-      RQBK_IDX, 
+      RQBK_IDX,
       RQBK_SH_CS,
-      CITY 
+      CITY
     WHERE RQBK_IDX.RQI_COMPLETE = -1
       AND RQBK_IDX.RQI_ACTIVE = -1
       AND RQBK_IDX.RQI_RQBK = 2
       AND RQBK_IDX.RQI_RQBK_ID = RQBK_SH_CS.RQSC_RQBK_ID
       AND DECODE(i_COMPANY_TYPE, 1, RQBK_SH_CS.RQSC_SH_ID, 2, RQBK_SH_CS.RQSC_CS_ID) = v_COMPANY_ID
       AND RQBK_SH_CS.RQSC_POD = CITY.CT_ID   -- Ocean
-      --AND (RQBK_SH_CS.RQSC_POD_AIR = CITY.CT_ID OR RQBK_SH_CS.RQSC_POD = CITY.CT_ID)   -- Ocean & Air ??
+      --AND (RQBK_SH_CS.RQSC_POD_AIR = CITY_AIR.CT_ID OR RQBK_SH_CS.RQSC_POD = CITY_OCEAN.CT_ID)   -- Ocean and Air ??
       AND CITY.CT_DESC IS NOT NULL
     ORDER BY CITY.CT_DESC ASC;
+  END IF;
+
+  IF (i_SEARCH_TYPE = 'POD-A') THEN  -- PlaceOfDeleivery [Air]
+    OPEN o_CURSOR FOR 
+    SELECT DISTINCT
+      AIRPORTS.AP_CODE SEARCH_TERM_KEY,    -- Key: Place of Deleivery (Airport Code)
+      AIRPORTS.AP_CODE SEARCH_TERM_VALUE   -- Value: Place of Deleivery (Airport Code)
+    FROM
+      RQBK_IDX,
+      RQBK_SH_CS,
+      AIRPORTS      
+    WHERE RQBK_IDX.RQI_COMPLETE = -1
+      AND RQBK_IDX.RQI_ACTIVE = -1
+      AND RQBK_IDX.RQI_RQBK = 2
+      AND RQBK_IDX.RQI_RQBK_ID = RQBK_SH_CS.RQSC_RQBK_ID
+      AND DECODE(i_COMPANY_TYPE, 1, RQBK_SH_CS.RQSC_SH_ID, 2, RQBK_SH_CS.RQSC_CS_ID) = v_COMPANY_ID
+      AND RQBK_SH_CS.RQSC_POD_AIR =  AIRPORTS.AP_ID (+)   -- Air      
+      AND AIRPORTS.AP_CODE IS NOT NULL
+    ORDER BY AIRPORTS.AP_CODE ASC;
   END IF;
 
   IF (i_SEARCH_TYPE = 'SN' OR i_SEARCH_TYPE = 'CN') THEN  -- Shipper Name or Consignee Name
