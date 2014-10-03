@@ -128,10 +128,10 @@ BEGIN
     ORDER BY RQBK_OC_CARRIER.RQOC_NVO_NUM ASC;
   END IF;
 
-  IF (i_SEARCH_TYPE = 'POD-C') THEN  -- PlaceOfDeleivery [City name]
+  IF (i_SEARCH_TYPE = 'POD-City') THEN  -- PlaceOfDeleivery [City]
     OPEN o_CURSOR FOR 
     SELECT DISTINCT
-      CITY.CT_DESC SEARCH_TERM_KEY,           -- Key: Place of Deleivery
+      CITY.CT_DESC SEARCH_TERM_KEY,           -- Key: Place of Deleivery (City)
       TO_CHAR(CITY.CT_ID) SEARCH_TERM_VALUE   -- Value: CITY ID
     FROM
       RQBK_IDX,
@@ -147,7 +147,26 @@ BEGIN
     ORDER BY CITY.CT_DESC ASC;
   END IF;
 
-  IF (i_SEARCH_TYPE = 'POD-AC') THEN  -- PlaceOfDeleivery [Airport code]
+  IF (i_SEARCH_TYPE = 'POD-Airport') THEN  -- PlaceOfDeleivery [Airport]
+    OPEN o_CURSOR FOR 
+    SELECT DISTINCT
+      AIRPORTS.AP_DESC SEARCH_TERM_KEY,    -- Key: Place of Deleivery (Airport)
+      AIRPORTS.AP_DESC SEARCH_TERM_VALUE   -- Value: Place of Deleivery (Airport)
+    FROM
+      RQBK_IDX,
+      RQBK_SH_CS,
+      AIRPORTS
+    WHERE RQBK_IDX.RQI_COMPLETE = -1
+      AND RQBK_IDX.RQI_ACTIVE = -1
+      AND RQBK_IDX.RQI_RQBK = 2
+      AND RQBK_IDX.RQI_RQBK_ID = RQBK_SH_CS.RQSC_RQBK_ID
+      AND DECODE(i_COMPANY_TYPE, 1, RQBK_SH_CS.RQSC_SH_ID, 2, RQBK_SH_CS.RQSC_CS_ID) = v_COMPANY_ID
+      AND RQBK_SH_CS.RQSC_POD_AIR = AIRPORTS.AP_ID (+)
+      AND AIRPORTS.AP_DESC IS NOT NULL
+    ORDER BY AIRPORTS.AP_DESC ASC;
+  END IF;
+
+  IF (i_SEARCH_TYPE = 'POD-AirportCode') THEN  -- PlaceOfDeleivery [Airport code]
     OPEN o_CURSOR FOR 
     SELECT DISTINCT
       AIRPORTS.AP_CODE SEARCH_TERM_KEY,    -- Key: Place of Deleivery (Airport Code)
@@ -166,11 +185,11 @@ BEGIN
     ORDER BY AIRPORTS.AP_CODE ASC;
   END IF;
 
-  IF (i_SEARCH_TYPE = 'POD-CC') THEN  -- PlaceOfDeleivery [Country code]
+  IF (i_SEARCH_TYPE = 'POD-Country') THEN  -- PlaceOfDeleivery [Country]
     OPEN o_CURSOR FOR 
     SELECT DISTINCT
-      COUNTRY.CY_CODE SEARCH_TERM_KEY,    -- Key: Place of Deleivery (Country Code)
-      COUNTRY.CY_CODE SEARCH_TERM_VALUE   -- Value: Place of Deleivery (Country Code)
+      COUNTRY.CY_DESC SEARCH_TERM_KEY,    -- Key: Place of Deleivery (Country)
+      COUNTRY.CY_DESC SEARCH_TERM_VALUE   -- Value: Place of Deleivery (Country)
     FROM
       RQBK_IDX,
       RQBK_SH_CS,
@@ -182,10 +201,11 @@ BEGIN
       AND RQBK_IDX.RQI_RQBK = 2
       AND RQBK_IDX.RQI_RQBK_ID = RQBK_SH_CS.RQSC_RQBK_ID
       AND DECODE(i_COMPANY_TYPE, 1, RQBK_SH_CS.RQSC_SH_ID, 2, RQBK_SH_CS.RQSC_CS_ID) = v_COMPANY_ID
-      AND (RQBK_SH_CS.RQSC_POD = CITY.CT_ID OR RQBK_SH_CS.RQSC_POD_AIR = AIRPORTS.AP_ID)
+      --AND (RQBK_SH_CS.RQSC_POD = CITY.CT_ID OR RQBK_SH_CS.RQSC_POD_AIR = AIRPORTS.AP_ID)
+      AND RQBK_SH_CS.RQSC_POD = CITY.CT_ID
       AND CITY.CT_COUNTRY_ID = COUNTRY.CY_ID
-      AND COUNTRY.CY_CODE IS NOT NULL
-    ORDER BY COUNTRY.CY_CODE ASC;
+      AND COUNTRY.CY_DESC IS NOT NULL
+    ORDER BY COUNTRY.CY_DESC ASC;
   END IF;
 
   IF (i_SEARCH_TYPE = 'SN' OR i_SEARCH_TYPE = 'CN') THEN  -- Shipper Name or Consignee Name
