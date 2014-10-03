@@ -7,19 +7,18 @@ create or replace PROCEDURE SP_PORTAL_SEARCH_TERMS
 )
 AS
 
-	v_COMPANY_ID CONSTANT NUMBER := TO_NUMBER(i_COMPANY_ID);   -- cast is required due to .NET EF bug
+	v_COMPANY_ID CONSTANT NUMBER := TO_NUMBER(i_COMPANY_ID);   -- Cast required due to .NET EF bug
 
 BEGIN
 
-  IF (i_COMPANY_TYPE != 1 AND i_COMPANY_TYPE != 2) THEN  -- not a Shipper or Consignee company
+  IF (i_COMPANY_TYPE != 1 AND i_COMPANY_TYPE != 2) THEN  -- Bypass if not Shipper or Consignee
     RETURN;
   END IF;
 
-  IF (i_SEARCH_TYPE = 'HN') THEN  -- HarbourNumber
+  IF (i_SEARCH_TYPE = 'HN') THEN  -- Harbour Number (Booking / Rate Quote)
     OPEN o_CURSOR FOR
     SELECT DISTINCT
-      RQBK_IDX.RQI_RQBK_NUM SEARCH_TERM_KEY,    -- Key: Harbour Number  (Booking / Rate Quote)
-      RQBK_IDX.RQI_RQBK_NUM SEARCH_TERM_VALUE   -- Value: Harbour Number
+      RQBK_IDX.RQI_RQBK_NUM SEARCH_TERM
     FROM
       RQBK_IDX,
       RQBK_SH_CS
@@ -27,15 +26,14 @@ BEGIN
       AND RQBK_IDX.RQI_ACTIVE = -1     -- Active Transaction
       AND RQBK_IDX.RQI_RQBK = 2        -- Booking Type
       AND RQBK_IDX.RQI_RQBK_ID = RQBK_SH_CS.RQSC_RQBK_ID
-      AND DECODE(i_COMPANY_TYPE, 1, RQBK_SH_CS.RQSC_SH_ID, 2, RQBK_SH_CS.RQSC_CS_ID) = v_COMPANY_ID   -- Decode: Shipper = 1, Consignee = 2
+      AND DECODE(i_COMPANY_TYPE, 1, RQBK_SH_CS.RQSC_SH_ID, 2, RQBK_SH_CS.RQSC_CS_ID) = v_COMPANY_ID   -- Decode: Shipper = 1, Consignee = 2      
     ORDER BY RQBK_IDX.RQI_RQBK_NUM ASC;
   END IF;
 
-  IF (i_SEARCH_TYPE = 'CBN') THEN  -- CarrierBookingNumber
+  IF (i_SEARCH_TYPE = 'CBN') THEN  -- Carrier Booking Number
     OPEN o_CURSOR FOR
     SELECT DISTINCT
-      RQBK_OC_CARRIER.RQOC_BK_NUM SEARCH_TERM_KEY,   -- Key: Carrier Booking Number
-      RQBK_IDX.RQI_RQBK_NUM SEARCH_TERM_VALUE        -- Value: Harbour Number
+      RQBK_OC_CARRIER.RQOC_BK_NUM SEARCH_TERM
     FROM
       RQBK_IDX,
       RQBK_SH_CS,
@@ -50,11 +48,10 @@ BEGIN
     ORDER BY RQBK_OC_CARRIER.RQOC_BK_NUM ASC;
   END IF;
 
-  IF (i_SEARCH_TYPE = 'SR') THEN  -- ShipperReferenceNumber
+  IF (i_SEARCH_TYPE = 'SR') THEN  -- Shipper Reference Number
     OPEN o_CURSOR FOR 
     SELECT DISTINCT
-      RQBK_REF.RQR_REF_NUM SEARCH_TERM_KEY,     -- Key: Shipper Reference Number
-      RQBK_IDX.RQI_RQBK_NUM SEARCH_TERM_VALUE   -- Value: Harbour Number
+      RQBK_REF.RQR_REF_NUM SEARCH_TERM
     FROM
       RQBK_IDX,
       RQBK_SH_CS,
@@ -70,11 +67,10 @@ BEGIN
     ORDER BY RQBK_REF.RQR_REF_NUM ASC;
   END IF;
 
-  IF (i_SEARCH_TYPE = 'CR') THEN  -- ConsigneeReferenceNumber
+  IF (i_SEARCH_TYPE = 'CR') THEN  -- Consignee Reference Number
     OPEN o_CURSOR FOR 
     SELECT DISTINCT
-      RQBK_REF.RQR_REF_NUM SEARCH_TERM_KEY,     -- Key: Consignee Reference Number
-      RQBK_IDX.RQI_RQBK_NUM SEARCH_TERM_VALUE   -- Value: Harbour Number
+      RQBK_REF.RQR_REF_NUM SEARCH_TERM
     FROM
       RQBK_IDX,
       RQBK_SH_CS,
@@ -90,11 +86,10 @@ BEGIN
     ORDER BY RQBK_REF.RQR_REF_NUM ASC;
   END IF;
 
-  IF (i_SEARCH_TYPE = 'AWN') THEN  -- AirWaybillNumber
+  IF (i_SEARCH_TYPE = 'AWN') THEN  -- Air Waybill Number
     OPEN o_CURSOR FOR
     SELECT DISTINCT
-      RQBK_AIR_CARRIER.RQAC_AWB_NUM SEARCH_TERM_KEY,   -- Key: Air Waybill Number
-      RQBK_IDX.RQI_RQBK_NUM SEARCH_TERM_VALUE          -- Value: Harbour Number
+      RQBK_AIR_CARRIER.RQAC_AWB_NUM SEARCH_TERM
     FROM
       RQBK_IDX,
       RQBK_SH_CS,
@@ -109,11 +104,10 @@ BEGIN
     ORDER BY RQBK_AIR_CARRIER.RQAC_AWB_NUM ASC;
   END IF;
 
-  IF (i_SEARCH_TYPE = 'NBN') THEN  -- NVOBookingNumber
+  IF (i_SEARCH_TYPE = 'NBN') THEN  -- NVO Booking Number
     OPEN o_CURSOR FOR 
     SELECT DISTINCT
-      RQBK_OC_CARRIER.RQOC_NVO_NUM SEARCH_TERM_KEY,   -- Key: NVO Booking Number
-      RQBK_IDX.RQI_RQBK_NUM SEARCH_TERM_VALUE         -- Value: Harbour Number
+      RQBK_OC_CARRIER.RQOC_NVO_NUM SEARCH_TERM
     FROM
       RQBK_IDX, 
       RQBK_SH_CS,
@@ -128,11 +122,10 @@ BEGIN
     ORDER BY RQBK_OC_CARRIER.RQOC_NVO_NUM ASC;
   END IF;
 
-  IF (i_SEARCH_TYPE = 'POD-City') THEN  -- PlaceOfDeleivery [City]
+  IF (i_SEARCH_TYPE = 'POD-Ci') THEN  -- Place of Deleivery [City]
     OPEN o_CURSOR FOR 
     SELECT DISTINCT
-      CITY.CT_DESC SEARCH_TERM_KEY,           -- Key: Place of Deleivery (City)
-      TO_CHAR(CITY.CT_ID) SEARCH_TERM_VALUE   -- Value: CITY ID
+      CITY.CT_DESC SEARCH_TERM
     FROM
       RQBK_IDX,
       RQBK_SH_CS,
@@ -147,11 +140,10 @@ BEGIN
     ORDER BY CITY.CT_DESC ASC;
   END IF;
 
-  IF (i_SEARCH_TYPE = 'POD-Airport') THEN  -- PlaceOfDeleivery [Airport]
+  IF (i_SEARCH_TYPE = 'POD-A') THEN  -- Place of Deleivery [Airport]
     OPEN o_CURSOR FOR 
     SELECT DISTINCT
-      AIRPORTS.AP_DESC SEARCH_TERM_KEY,    -- Key: Place of Deleivery (Airport)
-      AIRPORTS.AP_DESC SEARCH_TERM_VALUE   -- Value: Place of Deleivery (Airport)
+      AIRPORTS.AP_DESC SEARCH_TERM
     FROM
       RQBK_IDX,
       RQBK_SH_CS,
@@ -166,11 +158,10 @@ BEGIN
     ORDER BY AIRPORTS.AP_DESC ASC;
   END IF;
 
-  IF (i_SEARCH_TYPE = 'POD-AirportCode') THEN  -- PlaceOfDeleivery [Airport code]
+  IF (i_SEARCH_TYPE = 'POD-AC') THEN  -- Place of Deleivery [Airport Code]
     OPEN o_CURSOR FOR 
     SELECT DISTINCT
-      AIRPORTS.AP_CODE SEARCH_TERM_KEY,    -- Key: Place of Deleivery (Airport Code)
-      AIRPORTS.AP_CODE SEARCH_TERM_VALUE   -- Value: Place of Deleivery (Airport Code)
+      AIRPORTS.AP_CODE SEARCH_TERM
     FROM
       RQBK_IDX,
       RQBK_SH_CS,
@@ -185,11 +176,10 @@ BEGIN
     ORDER BY AIRPORTS.AP_CODE ASC;
   END IF;
 
-  IF (i_SEARCH_TYPE = 'POD-Country') THEN  -- PlaceOfDeleivery [Country]
+  IF (i_SEARCH_TYPE = 'POD-Co') THEN  -- Place of Deleivery [Country]
     OPEN o_CURSOR FOR 
     SELECT DISTINCT
-      COUNTRY.CY_DESC SEARCH_TERM_KEY,    -- Key: Place of Deleivery (Country)
-      COUNTRY.CY_DESC SEARCH_TERM_VALUE   -- Value: Place of Deleivery (Country)
+      COUNTRY.CY_DESC SEARCH_TERM
     FROM
       RQBK_IDX,
       RQBK_SH_CS,
@@ -201,7 +191,7 @@ BEGIN
       AND RQBK_IDX.RQI_RQBK = 2
       AND RQBK_IDX.RQI_RQBK_ID = RQBK_SH_CS.RQSC_RQBK_ID
       AND DECODE(i_COMPANY_TYPE, 1, RQBK_SH_CS.RQSC_SH_ID, 2, RQBK_SH_CS.RQSC_CS_ID) = v_COMPANY_ID
-      --AND (RQBK_SH_CS.RQSC_POD = CITY.CT_ID OR RQBK_SH_CS.RQSC_POD_AIR = AIRPORTS.AP_ID)
+      --AND (RQBK_SH_CS.RQSC_POD = CITY.CT_ID OR RQBK_SH_CS.RQSC_POD_AIR = AIRPORTS.AP_ID)  -- Broken: RQBK_SH_CS.RQSC_POD_AIR column is null
       AND RQBK_SH_CS.RQSC_POD = CITY.CT_ID
       AND CITY.CT_COUNTRY_ID = COUNTRY.CY_ID
       AND COUNTRY.CY_DESC IS NOT NULL
@@ -211,8 +201,7 @@ BEGIN
   IF (i_SEARCH_TYPE = 'SN' OR i_SEARCH_TYPE = 'CN') THEN  -- Shipper Name or Consignee Name
     OPEN o_CURSOR FOR
     SELECT DISTINCT
-      INITCAP(COMPANY.CO_NAME) SEARCH_TERM_KEY,   -- Key: Shipper/Consignee Name
-      TO_CHAR(COMPANY.CO_ID) SEARCH_TERM_VALUE    -- Value: Company ID
+      INITCAP(COMPANY.CO_NAME) SEARCH_TERM
     FROM
       RQBK_IDX,
       RQBK_SH_CS,
@@ -224,7 +213,7 @@ BEGIN
       AND DECODE(i_COMPANY_TYPE, 1, RQBK_SH_CS.RQSC_SH_ID, 2, RQBK_SH_CS.RQSC_CS_ID) = v_COMPANY_ID
       AND DECODE(i_COMPANY_TYPE, 2, RQBK_SH_CS.RQSC_SH_ID, 1, RQBK_SH_CS.RQSC_CS_ID) = COMPANY.CO_ID
       AND COMPANY.CO_NAME IS NOT NULL
-    ORDER BY SEARCH_TERM_KEY ASC;
+    ORDER BY SEARCH_TERM ASC;
   END IF;
   
 	EXCEPTION WHEN OTHERS THEN
