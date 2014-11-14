@@ -14,6 +14,10 @@ BEGIN
   IF (i_COMPANY_TYPE != 1 AND i_COMPANY_TYPE != 2) THEN  -- Bypass if not Shipper or Consignee
     RETURN;
   END IF;
+  
+--  IF (i_SEARCH_TYPE = 'CI') THEN  -- Company ID (return everything)
+--     RETURN;
+--  END IF;  
 
   IF (i_SEARCH_TYPE = 'HN') THEN  -- Harbour Number (Booking / Rate Quote)
     OPEN o_CURSOR FOR
